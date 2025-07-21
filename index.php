@@ -49,6 +49,9 @@ session_start();
             font-weight: bold;
             transition: all 0.3s ease;
             display: inline-block;
+            white-space: nowrap;
+            overflow: visible;
+            line-height: 1.2;
         }
         .cta-btn.primary {
             background: #4353B7;
@@ -96,7 +99,7 @@ session_start();
         <div class="container">
             <h1 style="font-size: 3.5rem; margin-bottom: 20px;">Welcome to ChatApp</h1>
             <p style="font-size: 1.2rem; margin-bottom: 30px;">Connect with friends and family through secure, real-time messaging</p>
-            <div class="cta-buttons">
+            <div class="cta-buttons" style="padding: 20px 0;">
                 <?php if (!isset($_SESSION['email'])): ?>
                     <a href="registration.php" class="cta-btn primary">Get Started</a>
                     <a href="login.php" class="cta-btn secondary">Sign In</a>
