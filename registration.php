@@ -44,20 +44,15 @@ if (isset($_POST['registration'])) {
 <body>
     <nav class="navbar">
         <div class="logo">
-            
+            <img src="logo-h.svg" alt="H Logo" style="width: 40px; height: 40px;">
             <span style="margin-left: 10px; font-weight: bold; font-size: 20px; color:#4353B7;">ChatApp</span>
         </div>
         <ul class="nav-links">
             <li><a href="#">Home</a></li>
-
-            <div class="auth-buttons">
-                <button class="login-btn"><a href="../admin-login.php">Login</a></button>
-                <!-- <button class="signup-btn"><a href="admin-login.php">Admin</a></button> -->
-
-            </div>
         </ul>
-
-
+        <div class="auth-buttons">
+            <button class="login-btn"><a href="login.php">Login</a></button>
+        </div>
         <!-- 3-bar Hamburger Icon -->
         <div class="hamburger" onclick="toggleMenu()">
             <i class="fas fa-bars"></i>
