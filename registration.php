@@ -14,13 +14,16 @@ if (isset($_POST['registration'])) {
     $bcrypt_password = password_hash($password, PASSWORD_BCRYPT);
 
 
-    $check = mysqli_query($conn, "SELECT * FROM user WHERE email='$email'");
-    if (mysqli_num_rows($check) > 0) {
+    $stmt = $conn->prepare('SELECT * FROM "user" WHERE email = :email');
+    $stmt->execute(['email' => $email]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
         echo "<script>alert('Email already registered.');</script>";
     } else {
         $sql = "INSERT INTO user(name,email,password,image) VALUES('$name','$email','$bcrypt_password','$image_store')";
 
-        mysqli_query($conn, $sql);
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
         echo "<script>alert('Registration Successful');</script>";
     }
 }
