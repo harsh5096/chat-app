@@ -56,10 +56,10 @@ if (isset($_POST['registration'])) {
             <span style="margin-left: 10px; font-weight: bold; font-size: 20px; color:#4353B7;">ChatApp</span>
         </div>
         <ul class="nav-links">
-            <li><a href="#">Home</a></li>
+<!--             <li><a href="#">Home</a></li> -->
         </ul>
         <div class="auth-buttons">
-            <button class="login-btn"><a href="login.php">Login</a></button>
+<!--             <button class="login-btn"><a href="login.php">Login</a></button> -->
         </div>
         <!-- 3-bar Hamburger Icon -->
         <div class="hamburger" onclick="toggleMenu()">
