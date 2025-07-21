@@ -56,9 +56,9 @@ if (isset($_POST['login'])) {
             $_SESSION['name'] = $row['name'];
             $_SESSION['image'] = $row['image'];
 
-            redirect('chat', 'Logged In Successfully');
+            redirect('chat.php', 'Logged In Successfully');
         } else {
-            redirect('login', 'Invalid Email Address');
+            redirect('login.php', 'Invalid Email Address');
         }
     } else {
         redirect('login', 'All feilds are mandatory');
