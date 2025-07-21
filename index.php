@@ -38,34 +38,27 @@ if (isset($_POST['login'])) {
 
     // Checking the fields are filled or not
     if ($email != '' && $password != '') {
-        $query = "SELECT * FROM user WHERE email='$email' LIMIT 1";
-        $result = mysqli_query($conn, $query);
+        // Use prepared statements for security
+        $query = 'SELECT * FROM "user" WHERE email = :email LIMIT 1';
+        $stmt = $conn->prepare($query);
+        $stmt->execute(['email' => $email]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Email checking
-        if ($result) {
+        if ($row) {
+            $hashedPassword = $row['password'];
 
-            if (mysqli_num_rows($result) == 1) {
-
-                // Password matching
-                $row = mysqli_fetch_assoc($result);
-                $hashedPassword = $row['password'];
-
-                if (!password_verify($password, $hashedPassword)) {
-                    redirect('login', 'Invalid Password');
-                }
-
-                // Storing Authentication Data
-
-                $_SESSION['email'] = $row['email'];
-                $_SESSION['name'] = $row['name'];
-                $_SESSION['image'] = $row['image'];
-
-                redirect('chat', 'Logged In Successfully');
-            } else {
-                redirect('login', 'Invalid Email Address');
+            if (!password_verify($password, $hashedPassword)) {
+                redirect('login', 'Invalid Password');
             }
+
+            // Storing Authentication Data
+            $_SESSION['email'] = $row['email'];
+            $_SESSION['name'] = $row['name'];
+            $_SESSION['image'] = $row['image'];
+
+            redirect('chat', 'Logged In Successfully');
         } else {
-            redirect('login', 'Something Went Wrong');
+            redirect('login', 'Invalid Email Address');
         }
     } else {
         redirect('login', 'All feilds are mandatory');
