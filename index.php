@@ -117,7 +117,7 @@ font-size: 25px;"> Login</h2>
                 </form>
                 <div style="margin-top:20px;" class="form-footer">
                     <!-- <p><a href="forgot_password.php">Forgot Password?</a></p> -->
-                    <p>No account? <a href="registration">Register</a></p>
+                    <p>No account? <a href="registration.php">Register</a></p>
                 </div>
             </div>
         </div>
