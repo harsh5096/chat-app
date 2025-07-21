@@ -8,22 +8,27 @@ if (isset($_POST['registration'])) {
     $password = validate($_POST['password']);
     $image = $_FILES['image']['name'];
     $image_tmp = $_FILES['image']['tmp_name'];
-    $image_store = "image/" . $image; // changed 'uploads/' to 'image/'
+    $image_store = "image/" . $image;
     move_uploaded_file($image_tmp, $image_store);
 
     $bcrypt_password = password_hash($password, PASSWORD_BCRYPT);
 
-
+    // Check if email already exists
     $stmt = $conn->prepare('SELECT * FROM "user" WHERE email = :email');
     $stmt->execute(['email' => $email]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row) {
         echo "<script>alert('Email already registered.');</script>";
     } else {
-        $sql = "INSERT INTO user(name,email,password,image) VALUES('$name','$email','$bcrypt_password','$image_store')";
-
+        // Use placeholders for security and to avoid SQL errors
+        $sql = 'INSERT INTO "user" (name, email, password, image) VALUES (:name, :email, :password, :image)';
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
+        $stmt->execute([
+            'name' => $name,
+            'email' => $email,
+            'password' => $bcrypt_password,
+            'image' => $image_store
+        ]);
         echo "<script>alert('Registration Successful');</script>";
     }
 }
