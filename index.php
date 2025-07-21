@@ -12,11 +12,15 @@ session_start();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="login1.css">
     <style>
+        body {
+            margin-top: 108px; /* Account for fixed navbar */
+        }
         .hero-section {
             background: linear-gradient(135deg, #74b9ff, #0984e3);
             color: white;
             padding: 100px 0;
             text-align: center;
+            margin-top: -108px; /* Compensate for body margin */
         }
         .feature-card {
             background: white;
@@ -44,6 +48,7 @@ session_start();
             text-decoration: none;
             font-weight: bold;
             transition: all 0.3s ease;
+            display: inline-block;
         }
         .cta-btn.primary {
             background: #4353B7;
@@ -57,13 +62,20 @@ session_start();
         .cta-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-decoration: none;
+        }
+        .cta-btn.primary:hover {
+            color: white;
+        }
+        .cta-btn.secondary:hover {
+            color: #4353B7;
         }
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="logo">
-            <img src="logo-h.svg" alt="H Logo" style="width: 40px; height: 40px;">
+            <img src="logo-h.svg" alt="H Logo" style="width: 40px; height: 40px; margin-top: -62px;">
             <span style="margin-left: 10px; font-weight: bold; font-size: 20px; color: #4353B7;">ChatApp</span>
         </div>
         <ul class="nav-links">
