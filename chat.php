@@ -78,33 +78,36 @@ if (!$receiver_email && count($users) > 0) {
         <h2>Users</h2>
 
         <ul class="user-list">
-            <?php
-            // First, display the logged-in user with an indicator
-            $logged_in_user_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email = '$me'");
-            if ($logged_in_user = mysqli_fetch_assoc($logged_in_user_query)) {
-                $profile_photo = !empty($logged_in_user['image']) ? $logged_in_user['image'] : 'image/default_profile.png';
-                echo "<li style='background-color: #475569; cursor: pointer; border-radius:8px; font-weight: bold; color: white;' class='logged-in-user'>";
-                echo "<div class='user-link'>"; // No href for the logged-in user in the list
-                echo "<img src='{$profile_photo}' alt='{$logged_in_user['name']}' class='profile-photo'onclick='openModal(this)'>";
-                echo "<span>{$logged_in_user['name']} (You)</span>";
-                echo "</div>";
-                echo "</li>";
-            }
+ <?php
+// First, display the logged-in user with an indicator
+$logged_in_user_stmt = $conn->prepare('SELECT id, name, email, image FROM "user" WHERE email = :me');
+$logged_in_user_stmt->execute(['me' => $me]);
+$logged_in_user = $logged_in_user_stmt->fetch(PDO::FETCH_ASSOC);
+if ($logged_in_user) {
+    $profile_photo = !empty($logged_in_user['image']) ? $logged_in_user['image'] : 'image/default_profile.png';
+    echo "<li style='background-color: #475569; cursor: pointer; border-radius:8px; font-weight: bold; color: white;' class='logged-in-user'>";
+    echo "<div class='user-link'>";
+    echo "<img src='{$profile_photo}' alt='{$logged_in_user['name']}' class='profile-photo' onclick='openModal(this)'>";
+    echo "<span>{$logged_in_user['name']} (You)</span>";
+    echo "</div>";
+    echo "</li>";
+}
 
-            // Then, display the other users
-            $other_users_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email != '$me'");
-            while ($other_user = mysqli_fetch_assoc($other_users_query)) {
-                $profile_photo = !empty($other_user['image']) ? $other_user['image'] : 'image/default_profile.png';
-                $selected_style = ($other_user['email'] == $receiver_email) ? "style='font-weight:bold; color: #fff;'" : "";
+// Then, display the other users
+$other_users_stmt = $conn->prepare('SELECT id, name, email, image FROM "user" WHERE email != :me');
+$other_users_stmt->execute(['me' => $me]);
+while ($other_user = $other_users_stmt->fetch(PDO::FETCH_ASSOC)) {
+    $profile_photo = !empty($other_user['image']) ? $other_user['image'] : 'image/default_profile.png';
+    $selected_style = ($other_user['email'] == $receiver_email) ? "style='font-weight:bold; color: #fff;'" : "";
 
-                echo "<li>";
-                echo "<a href='chat.php?user={$other_user['email']}' class='user-link' $selected_style>";
-                echo "<img src='{$profile_photo}' alt='{$other_user['name']}' class='profile-photo' onclick='openModal(this); event.stopPropagation(); event.preventDefault();'>"; // prevents link click
-                echo "<span>{$other_user['name']}</span>";
-                echo "</a>";
-                echo "</li>";
-            }
-            ?>
+    echo "<li>";
+    echo "<a href='chat.php?user={$other_user['email']}' class='user-link' $selected_style>";
+    echo "<img src='{$profile_photo}' alt='{$other_user['name']}' class='profile-photo' onclick='openModal(this); event.stopPropagation(); event.preventDefault();'>";
+    echo "<span>{$other_user['name']}</span>";
+    echo "</a>";
+    echo "</li>";
+}
+?>
         </ul>
         <div class="logout-link">
             <a href='logout'>Logout</a>
@@ -116,55 +119,50 @@ if (!$receiver_email && count($users) > 0) {
             <h3>Chat with: <?php echo htmlspecialchars($receiver_email); ?></h3>
         </div>
         <div class="message-area" id="messageArea">
-            <?php
-            $msgs = mysqli_query($conn, "
-        SELECT * FROM message
-        WHERE (sender_email = '$me' AND receiver_email = '$receiver_email')
-           OR (sender_email = '$receiver_email' AND receiver_email = '$me')
-        ORDER BY time ASC
-    ");
+           
 
-            while ($msg = mysqli_fetch_array($msgs)) {
-                $cls = $msg['sender_email'] == $me ? "sent" : "received";
-                echo "<div class='message $cls' data-message-id='" . htmlspecialchars($msg['id']) . "'>";
+               <?php
+$msgs_stmt = $conn->prepare('
+    SELECT * FROM message
+    WHERE (sender_email = :me AND receiver_email = :receiver)
+       OR (sender_email = :receiver AND receiver_email = :me)
+    ORDER BY time ASC
+');
+$msgs_stmt->execute(['me' => $me, 'receiver' => $receiver_email]);
+while ($msg = $msgs_stmt->fetch(PDO::FETCH_ASSOC)) {
+    $cls = $msg['sender_email'] == $me ? "sent" : "received";
+    echo "<div class='message $cls' data-message-id='" . htmlspecialchars($msg['id']) . "'>";
 
-                echo "<div class='message-top'>";
-                echo "<div class='message-text'>" . htmlspecialchars($msg['message']) . "</div>";
+    echo "<div class='message-top'>";
+    echo "<div class='message-text'>" . htmlspecialchars($msg['message']) . "</div>";
 
-                // Show the forward and delete icons directly
-                echo "<div class='message-actions'>";
+    // Show the forward and delete icons directly
+    echo "<div class='message-actions'>";
 
-                // 🔁 Forward icon
+    // 🗑️ Delete icon, only if the user is the sender
+    if ($msg['sender_email'] == $me) {
+        echo "<form method='POST' action='delete_message.php?user=" . urlencode($receiver_email) . "' onsubmit='return confirm(\"Delete this message?\");' style='display:inline; margin-right-13px;'>";
+        echo "<input type='hidden' name='message_id' value='" . htmlspecialchars($msg['id']) . "'>";
+        echo "<button type='submit' class='delete-icon' title='Delete'><i class='fas fa-trash-alt'></i></button>";
+        echo "</form>";
+    }
 
-                // 🗑️ Delete icon, only if the user is the sender
-                if ($msg['sender_email'] == $me) {
-                    echo "<form method='POST' action='delete_message.php?user=" . urlencode($receiver_email) . "' onsubmit='return confirm(\"Delete this message?\");' style='display:inline; margin-right-13px;'>";
-                    echo "<input type='hidden' name='message_id' value='" . htmlspecialchars($msg['id']) . "'>";
-                    echo "<button type='submit' class='delete-icon' title='Delete'><i class='fas fa-trash-alt'></i></button>";
-                    echo "</form>";
-                }
+    echo "<i class='fas fa-share forward-icon' title='Forward' data-msg-id='" . htmlspecialchars($msg['id']) . "' data-msg-text='" . htmlspecialchars($msg['message']) . "' data-msg-image='" . htmlspecialchars($msg['image']) . "' onclick='forwardMessage(this)'></i>";
+    echo "</div>"; // .message-actions
 
-                echo "<i class='fas fa-share forward-icon' title='Forward' data-msg-id='" . htmlspecialchars($msg['id']) . "' data-msg-text='" . htmlspecialchars($msg['message']) . "' data-msg-image='" . htmlspecialchars($msg['image']) . "' onclick='forwardMessage(this)'></i>";
-                echo "</div>"; // .message-actions
+    echo "</div>"; // .message-top
 
-                echo "</div>"; // .message-top
+    // Image preview
+    if ($msg['image']) {
+        echo "<br><img src='" . htmlspecialchars($msg['image']) . "' class='image-message' onclick='openModal(this)'>";
+    }
 
-                // Image preview
-                if ($msg['image']) {
-                    echo "<br><img src='" . htmlspecialchars($msg['image']) . "' class='image-message' onclick='openModal(this)'>";
-                }
+    // Timestamp
+    echo "<br><small style='margin-top: -17px; '>" . htmlspecialchars($msg['time']) . "</small>";
 
-                // Timestamp
-                // echo "<br><small>" . htmlspecialchars($msg['time']) . "</small>";
-                echo "<br><small style='margin-top: -17px; '>" . htmlspecialchars($msg['time']) . "</small>";
-
-
-
-                echo "</div>"; // .message
-            }
-
-
-            ?>
+    echo "</div>"; // .message
+}
+?>
         </div>
         <form class="input-area" method="POST" action="chat.php?user=<?php echo htmlspecialchars($receiver_email); ?>" enctype="multipart/form-data">
             <input type="hidden" name="receiver_email" value="<?php echo htmlspecialchars($receiver_email); ?>">
@@ -207,13 +205,12 @@ if (!$receiver_email && count($users) > 0) {
             </div>
             <div id="forwardUserList">
                 <?php
-                // $all_users_query = mysqli_query($conn, "SELECT id, name, email FROM user WHERE email != '$me'");
-                $all_users_query = mysqli_query($conn, "SELECT id, name, email FROM user WHERE email != '$me' AND email != '$receiver_email'");
-
-                while ($user = mysqli_fetch_assoc($all_users_query)) {
-                    echo "<label><input type='checkbox' name='forward_to[]' value='" . htmlspecialchars($user['email']) . "'> " . htmlspecialchars($user['name']) . " (" . htmlspecialchars($user['email']) . ")</label><br>";
-                }
-                ?>
+$all_users_stmt = $conn->prepare('SELECT id, name, email FROM "user" WHERE email != :me AND email != :receiver');
+$all_users_stmt->execute(['me' => $me, 'receiver' => $receiver_email]);
+while ($user = $all_users_stmt->fetch(PDO::FETCH_ASSOC)) {
+    echo "<label><input type='checkbox' name='forward_to[]' value='" . htmlspecialchars($user['email']) . "'> " . htmlspecialchars($user['name']) . " (" . htmlspecialchars($user['email']) . ")</label><br>";
+}
+?>
             </div>
             <button id="sendForward">Send Forward</button>
         </div>
