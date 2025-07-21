@@ -11,8 +11,7 @@ html {
 }
 
 .navbar {
-    display: flex
-;
+    display: flex;
     justify-content: space-between;
     align-items: center;
     height: 108px;
@@ -32,14 +31,16 @@ html {
     margin-top: -62px;
     height: 232px;
     width: auto;
+    object-fit: contain;
 }
 
 /* Navigation Links */
 .nav-links {
-    
     display: flex;
     list-style: none;
     transition: all 0.3s ease-in-out;
+    margin: 0;
+    padding: 0;
 }
 
 .nav-links li {
