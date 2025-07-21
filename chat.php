@@ -4,7 +4,6 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
-// include 'conn.php';
 include 'conn.php';
 
 if (!isset($_SESSION['email'])) {
@@ -14,6 +13,7 @@ if (!isset($_SESSION['email'])) {
 
 $me = $_SESSION['email'];
 
+// Send message
 if (isset($_POST['send'])) {
     $to = $_POST['receiver_email'];
     $message = $_POST['message'];
@@ -26,16 +26,24 @@ if (isset($_POST['send'])) {
         move_uploaded_file($img_tmp, $img_path);
     }
 
-    $sql = "INSERT INTO message(sender_email, receiver_email, message, image)
-                VALUES('$me', '$to', '$message', '$img_path')";
-    mysqli_query($conn, $sql);
+    $sql = 'INSERT INTO message(sender_email, receiver_email, message, image) VALUES(:sender_email, :receiver_email, :message, :image)';
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([
+        'sender_email' => $me,
+        'receiver_email' => $to,
+        'message' => $message,
+        'image' => $img_path
+    ]);
 }
 
-$users = mysqli_query($conn, "SELECT * FROM user WHERE email != '$me'");
-$receiver_email = $_GET['user'] ?? '';
+// Fetch users to chat with
+$users_stmt = $conn->prepare('SELECT id, name, email, image FROM "user" WHERE email != :me');
+$users_stmt->execute(['me' => $me]);
+$users = $users_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if (!$receiver_email && $row = mysqli_fetch_assoc($users)) {
-    $receiver_email = $row['email'];
+$receiver_email = $_GET['user'] ?? '';
+if (!$receiver_email && count($users) > 0) {
+    $receiver_email = $users[0]['email'];
 }
 ?>
 
