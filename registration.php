@@ -52,7 +52,7 @@ if (isset($_POST['registration'])) {
 <body>
     <nav class="navbar">
         <div class="logo">
-            <img src="logo-h.svg" alt="H Logo" style="width: 40px; height: 40px;">
+<!--             <img src="logo-h.svg" alt="H Logo" style="width: 40px; height: 40px;"> -->
             <span style="margin-left: 10px; font-weight: bold; font-size: 20px; color:#4353B7;">ChatApp</span>
         </div>
         <ul class="nav-links">
