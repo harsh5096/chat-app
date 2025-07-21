@@ -1,0 +1,631 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1e293b; /* Dark background */
+    color: #f8f8f2; /* Light text */
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+/* .sidebar {
+    background-color: #28374d; 
+    color: #f8f8f2;
+    width: 300px;
+    padding: 20px;
+    min-height: 95vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3); 
+    display: flex;
+    flex-direction: column;
+} */
+.sidebar {
+width: 250px; /* Or your preferred width */
+background-color: #1e293b; /* Dark sidebar background */
+color: #e2e8f0;
+padding: 20px;
+display: flex;
+flex-direction: column;
+height: 95vh; /* Or a fixed height if you don't want full viewport height */
+overflow-y: auto; /* Add vertical scrollbar when content overflows */
+scrollbar-width: thin; /* For Firefox */
+scrollbar-color: #888 #f1f1f1; /* For Firefox (thumb track) */
+}
+
+/* .sidebar::-webkit-scrollbar {
+width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+background: #888;
+border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+background: #555;
+} */
+
+.sidebar h2 {
+    font-size: 1.5em;
+    margin-bottom: 25px;
+    color: #f8f8f2;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #475569; /* Subtle divider */
+}
+
+/* Logged-in User Info */
+.logged-in-info {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.logged-in-photo {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 15px;
+    border: 2px solid #5eead4; /* Accent color for logged-in */
+}
+
+.logged-in-name {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.logged-in-status {
+    font-size: 0.8em;
+    color: #a1a1aa;
+}
+
+/* User List */
+/* .user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+} */
+.user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;            /* Enables vertical scrolling */
+    max-height: calc(100vh - 250px); /* Adjust depending on other content like headers/logouts */
+    scrollbar-width: thin;      /* For Firefox */
+    scrollbar-color: #888 #f1f1f1; /* For Firefox (thumb track) */
+}
+
+.user-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.user-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.user-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.user-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
+.user-list li {
+    margin-bottom: 12px;
+}
+
+.user-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.user-link:hover {
+    background-color: #475569;
+}
+
+.profile-photo {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.user-name {
+    font-weight: normal;
+    font-size: 1em;
+}
+
+/* Logout Link */
+.logout-link {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #475569;
+}
+
+.logout-link a {
+    display: block;
+    background-color: #dc2626; /* Red logout button */
+    color: #f8f8f2;
+    padding: 12px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    text-align: center;
+    transition: background-color 0.2s ease;
+    margin-bottom: 35px;
+}
+
+.logout-link a:hover {
+    background-color: #b91c1c;
+}
+
+
+
+
+
+
+/* Content Area (Chat Area) */
+.content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: #0f172a; /* Dark content background */
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background-color: #1e293b;
+    padding: 15px;
+    border-bottom: 1px solid #475569;
+    margin-bottom: 20px;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.chat-header h3 {
+    color: #e2e8f0;
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.message-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #1e293b; /* Dark message area background */
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.message-area {
+/* Existing styles */
+overflow-y: auto; /* Add vertical scrollbar when content overflows */
+scrollbar-width: thin; /* For Firefox */
+scrollbar-color: #888 #f1f1f1; /* For Firefox (thumb track) */
+height: 400px; /* Or any fixed height you prefer */
+}
+
+/* For Chrome, Edge, and Safari */
+.message-area::-webkit-scrollbar {
+width: 8px;
+}
+
+.message-area::-webkit-scrollbar-track {
+background: #f1f1f1;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+background: #888;
+border-radius: 4px;
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+background: #555;
+}
+
+.message {
+    background-color: #334155; /* Dark message bubble */
+    color: #f8f8f2;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    max-width: 80%;
+    clear: both;
+    font-size: 16px;
+    word-break: break-word;
+}
+
+.sent {
+    background-color: #0f766e; /* Teal for sent messages */
+    align-self: flex-end;
+}
+
+.received {
+    background-color: #475569; /* Grey for received messages */
+    align-self: flex-start;
+}
+
+.message small {
+    color: #a1a1aa;
+    display: block;
+    font-size: 0.7em;
+}
+
+.image-message {
+    width: 150px;
+    border-radius: 6px;
+    margin-top: -10px;
+    padding-bottom: 25px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.input-area {
+    background-color: #1e293b; /* Dark input area */
+    padding: 15px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.input-area input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    font-size: 16px;
+    /* margin-right: 10px; */
+    margin-right: 3px;
+    background-color: #334155;
+    color: #f8f8f2;
+}
+
+.input-area button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.input-area button:hover {
+    background-color: #0056b3;
+}
+
+.input-area #emoji-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    margin-left: 10px;
+    margin-right: 10px;
+    cursor: pointer;
+    color: #a1a1aa;
+}
+
+.input-area input[type="file"] {
+    color: #a1a1aa;
+    margin-left: 10px;
+}
+/* The Modal (background) */
+/* The Modal (background) */
+/* The Modal (background) */
+/* The Modal (background) */
+/* --- Global Modal Styles (applied to both modals) --- */
+.modal {
+    display: none;
+    position: fixed; /* Changed from absolute to fixed for overlay */
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    display: flex; /* For centering content within the overlay */
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Add some padding around the content */
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 7px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    max-width: 49%;
+    max-height: 90%;
+    overflow-y: auto;
+}
+
+/* --- Image Modal Specific Styles (#myModal) --- */
+#myModal .modal-content {
+    display: block; /* To properly display the image */
+    text-align: center; /* Center the image */
+}
+
+#myModal .modal-content img {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+#myModal #caption {
+    color: #333;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+#myModal .close {
+    color: black;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#myModal #downloadLink button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#myModal #downloadLink button:hover {
+    background-color: #0056b3;
+}
+
+/* --- Forward Modal Specific Styles (#forwardModal) --- */
+#forwardModal .modal-content {
+    width: 400px; /* Set a specific width for the forward modal content */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Stretch items to fill the width */
+}
+
+#forwardModal h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+#forwardModal #forwardUserList {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+#forwardModal #forwardUserList li {
+    margin: 5px 0;
+}
+
+#forwardModal #forwardUserList label {
+    display: block;
+    color: #333;
+}
+
+#forwardModal button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    align-self: center; /* Center the button */
+}
+
+#forwardModal button:hover {
+    background-color: #0056b3;
+}
+
+#forwardModal .close-forward {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#forwardModal .close-forward:hover,
+#forwardModal .close-forward:focus {
+    color: black;
+    text-decoration: none;
+}
+
+
+
+.message-top{
+
+    display: flex;
+    justify-content: space-between;
+}
+
+.message-actions{
+    display: inline;
+}
+
+.delete-icon {
+    background: none;     /* Remove background */
+    border: none;         /* Remove border */
+    padding: 0;           /* Remove padding */
+    color: inherit;       /* Inherit color from the parent (for icon color) */
+    cursor: pointer;     /* Make the icon clickable */
+}
+
+.delete-icon i {
+    font-size: 12px; /* You can adjust the size as needed */
+    color: #f3efef; 
+    /* margin-right: 9px;  */
+    margin-left: 12px;
+}
+.forward-icon {
+    font-size: 12px; /* Adjust this value to control the size */
+    cursor: pointer; /* Optional: Make it clickable with a pointer cursor */
+    color: inherit;
+    padding-left: 12px;   /* Optional: Inherit the color from the parent */
+}
+
+
+
+
+
+
+@media (max-width: 768px) {
+    .content {
+        padding: 15px;
+    }
+
+    .chat-header {
+        padding: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .chat-header h3 {
+        font-size: 1em;
+    }
+
+    .message-area {
+        padding: 10px;
+        height: 300px;
+    }
+
+    .message {
+        font-size: 14px;
+        max-width: 100%;
+        padding: 8px 12px;
+    }
+
+    .input-area {
+        flex-direction: row;
+        align-items: stretch;
+        padding: 10px;
+    }
+
+    .input-area input[type="text"] {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .input-area button {
+        width: 72px;
+        height: 39px;
+        margin-right: 2px;
+    }
+
+    .input-area #emoji-btn,
+    .input-area input[type="file"] {
+        margin: 5px 0;
+    }
+
+    .modal-content {
+        max-width: 90%;
+        max-height: 80%;
+    }
+
+    #forwardModal .modal-content {
+        width: 100%;
+    }
+
+    .image-message {
+        width: 100px;
+    }
+
+    .message-top {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .delete-icon i,
+    .forward-icon {
+        font-size: 10px;
+        margin-left: 6px;
+        padding-left: 6px;
+    }
+}
+
+
+
+
+
+
+
+/* Hamburger Button */
+.hamburger {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background-color: #1e293b;
+    border: none;
+    color: #f8f8f2;
+    padding: 3px;
+    z-index: 999;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+/* Make Sidebar Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -290px;
+        top: 0;
+        height: 100%;
+        width: 250px;
+        background-color: #1e293b;
+        z-index: 998;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    .hamburger {
+        display: block;
+    }
+
+    .content {
+        height: 100vh;
+        margin-left: 0;
+        padding-top: 60px;
+    }
+}
+
+
+

@@ -1,0 +1,822 @@
+<?php
+session_start();
+include 'conn.php';
+
+if (!isset($_SESSION['email'])) {
+    header("location: login.php");
+    exit();
+}
+
+$me = $_SESSION['email'];
+
+if (isset($_POST['send'])) {
+    $to = $_POST['receiver_email'];
+    $message = $_POST['message'];
+    $img_path = '';
+
+    if (isset($_FILES['image']['name']) && $_FILES['image']['name'] != '') {
+        $img_name = $_FILES['image']['name'];
+        $img_tmp = $_FILES['image']['tmp_name'];
+        // $img_path = "uploads/" . time() . '_' . $img_name;
+        $img_path = "image/" . time() . '_' . $img_name;
+        move_uploaded_file($img_tmp, $img_path);
+    }
+
+    $sql = "INSERT INTO message(sender_email, receiver_email, message, image)
+                VALUES('$me', '$to', '$message', '$img_path')";
+    mysqli_query($conn, $sql);
+}
+
+$users = mysqli_query($conn, "SELECT * FROM user WHERE email != '$me'");
+$receiver_email = $_GET['user'] ?? '';
+
+if (!$receiver_email && $row = mysqli_fetch_assoc($users)) {
+    $receiver_email = $row['email'];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Chat Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.css">
+    
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #1e293b; /* Dark background */
+        color: #f8f8f2; /* Light text */
+        margin: 0;
+        padding: 0;
+        display: flex;
+    }
+
+    /* .sidebar {
+        background-color: #28374d; 
+        color: #f8f8f2;
+        width: 300px;
+        padding: 20px;
+        min-height: 95vh;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3); 
+        display: flex;
+        flex-direction: column;
+    } */
+    .sidebar {
+    width: 250px; /* Or your preferred width */
+    background-color: #1e293b; /* Dark sidebar background */
+    color: #e2e8f0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 95vh; /* Or a fixed height if you don't want full viewport height */
+    overflow-y: auto; /* Add vertical scrollbar when content overflows */
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: #888 #f1f1f1; /* For Firefox (thumb track) */
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+    .sidebar h2 {
+        font-size: 1.5em;
+        margin-bottom: 25px;
+        color: #f8f8f2;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #475569; /* Subtle divider */
+    }
+
+    /* Logged-in User Info */
+    .logged-in-info {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+    }
+
+    .logged-in-photo {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-right: 15px;
+        border: 2px solid #5eead4; /* Accent color for logged-in */
+    }
+
+    .logged-in-name {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    .logged-in-status {
+        font-size: 0.8em;
+        color: #a1a1aa;
+    }
+
+    /* User List */
+    .user-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .user-list li {
+        margin-bottom: 12px;
+    }
+
+    .user-link {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #e2e8f0;
+        padding: 10px;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+    .user-link:hover {
+        background-color: #475569;
+    }
+
+    .profile-photo {
+        width: 45px;
+        height: 45px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+
+    .user-name {
+        font-weight: normal;
+        font-size: 1em;
+    }
+
+    /* Logout Link */
+    .logout-link {
+        margin-top: auto;
+        padding-top: 20px;
+        border-top: 1px solid #475569;
+    }
+
+    .logout-link a {
+        display: block;
+        background-color: #dc2626; /* Red logout button */
+        color: #f8f8f2;
+        padding: 12px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.2s ease;
+    }
+
+    .logout-link a:hover {
+        background-color: #b91c1c;
+    }
+
+    /* Content Area (Chat Area) */
+    .content {
+        flex-grow: 1;
+        padding: 30px;
+        background-color: #0f172a; /* Dark content background */
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        background-color: #1e293b;
+        padding: 15px;
+        border-bottom: 1px solid #475569;
+        margin-bottom: 20px;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+    }
+
+    .chat-header h3 {
+        color: #e2e8f0;
+        margin: 0;
+        font-size: 1.2em;
+    }
+
+    .message-area {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #1e293b; /* Dark message area background */
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+    .message-area {
+    /* Existing styles */
+    overflow-y: auto; /* Add vertical scrollbar when content overflows */
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: #888 #f1f1f1; /* For Firefox (thumb track) */
+    height: 400px; /* Or any fixed height you prefer */
+}
+
+/* For Chrome, Edge, and Safari */
+.message-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.message-area::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+    .message {
+        background-color: #334155; /* Dark message bubble */
+        color: #f8f8f2;
+        padding: 10px 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        max-width: 80%;
+        clear: both;
+        font-size: 16px;
+        word-break: break-word;
+    }
+
+    .sent {
+        background-color: #0f766e; /* Teal for sent messages */
+        align-self: flex-end;
+    }
+
+    .received {
+        background-color: #475569; /* Grey for received messages */
+        align-self: flex-start;
+    }
+
+    .message small {
+        color: #a1a1aa;
+        display: block;
+        margin-top: 5px;
+        font-size: 0.8em;
+    }
+
+    .image-message {
+        width: 150px;
+        border-radius: 6px;
+        margin-top: 5px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-area {
+        background-color: #1e293b; /* Dark input area */
+        padding: 15px;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+    }
+
+    .input-area input[type="text"] {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        font-size: 16px;
+        margin-right: 10px;
+        background-color: #334155;
+        color: #f8f8f2;
+    }
+
+    .input-area button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
+
+    .input-area button:hover {
+        background-color: #0056b3;
+    }
+
+    .input-area #emoji-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        margin-left: 10px;
+        margin-right: 10px;
+        cursor: pointer;
+        color: #a1a1aa;
+    }
+
+    .input-area input[type="file"] {
+        color: #a1a1aa;
+        margin-left: 10px;
+    }
+    /* The Modal (background) */
+/* The Modal (background) */
+/* The Modal (background) */
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default - THIS IS CRUCIAL */
+    position: absolute;
+    z-index: 100;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: auto;
+    max-width: 90%;
+    height: auto;
+    max-height: 90%;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: flex; /* Keep flex for centering when visible */
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ... other modal styles ... */
+.modal-content {
+    display: block;
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+#caption {
+    color: #333;
+    text-align: center;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.close {
+    color: black;
+}
+
+.close:hover,
+.close:focus {
+    opacity: 1;
+    text-decoration: none;
+}
+
+
+/* #downloadLink {
+    text-align: center;
+    display: block;
+} */
+
+#downloadLink button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#downloadLink button:hover {
+    background-color: #0056b3;
+}
+/* Adjustments for smaller screens (e.g., tablets) */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column; /* Stack sidebar and content vertically */
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto; /* Adjust height as needed */
+        max-height: 300px; /* Example max height for the user list */
+        overflow-x: auto; /* Allow horizontal scrolling for user list if needed */
+        flex-direction: row; /* Display users horizontally */
+        align-items: flex-start; /* Align items to the start in the row */
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    .sidebar h2 {
+        display: none; /* Hide the "Users" heading on smaller screens */
+    }
+
+    .user-list {
+        display: flex; /* Make user list horizontal */
+        flex-wrap: nowrap; /* Prevent wrapping to a new line */
+        overflow-x: auto; /* Enable horizontal scrolling for users */
+        margin-bottom: 0;
+        padding: 0 10px;
+    }
+
+    .user-list li {
+        margin-right: 15px;
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .user-link {
+        flex-direction: column; /* Stack photo and name vertically */
+        align-items: center;
+        padding: 8px;
+        border-radius: 8px;
+        min-width: 80px; /* Ensure each user item has a minimum width */
+        text-align: center;
+    }
+
+    .profile-photo {
+        margin-right: 0;
+        margin-bottom: 5px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .logout-link {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #475569;
+        text-align: center;
+    }
+
+    .content {
+        padding: 20px;
+    }
+}
+
+/* Adjustments for even smaller screens (e.g., phones) */
+@media (max-width: 480px) {
+    .chat-header h3 {
+        font-size: 1em;
+    }
+
+    .message {
+        font-size: 14px;
+        max-width: 95%;
+    }
+
+    .input-area input[type="text"] {
+        font-size: 14px;
+    }
+
+    .input-area button {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    .profile-photo {
+        width: 35px;
+        height: 35px;
+    }
+
+    .user-link span {
+        font-size: 0.9em;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Users</h2>
+        <ul class="user-list">
+            <?php
+            // First, display the logged-in user with an indicator
+            $logged_in_user_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email = '$me'");
+            if ($logged_in_user = mysqli_fetch_assoc($logged_in_user_query)) {
+                $profile_photo = !empty($logged_in_user['image']) ? $logged_in_user['image'] : 'image/default_profile.png';
+                echo "<li class='logged-in-user'>";
+                echo "<div class='user-link'>"; // No href for the logged-in user in the list
+                echo "<img src='{$profile_photo}' alt='{$logged_in_user['name']}' class='profile-photo'>";
+                echo "<span>{$logged_in_user['name']} (You)</span>";
+                echo "</div>";
+                echo "</li>";
+            }
+
+            // Then, display the other users
+            $other_users_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email != '$me'");
+            while ($other_user = mysqli_fetch_assoc($other_users_query)) {
+                $profile_photo = !empty($other_user['image']) ? $other_user['image'] : 'image/default_profile.png';
+                $selected_style = ($other_user['email'] == $receiver_email) ? "style='font-weight:bold; color: #fff;'" : "";
+
+                echo "<li>";
+                echo "<a href='chat.php?user={$other_user['email']}' class='user-link' $selected_style>";
+                echo "<img src='{$profile_photo}' alt='{$other_user['name']}' class='profile-photo'>";
+                echo "<span>{$other_user['name']}</span>";
+                echo "</a>";
+                echo "</li>";
+            }
+            ?>
+        </ul>
+        <div class="logout-link">
+            <a href='logout.php'>Logout</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="chat-header">
+            <h3>Chat with: <?php echo htmlspecialchars($receiver_email); ?></h3>
+        </div>
+        <div class="message-area" id="messageArea">
+            <?php
+            $msgs = mysqli_query($conn, "
+                SELECT * FROM message
+                WHERE (sender_email = '$me' AND receiver_email = '$receiver_email')
+                   OR (sender_email = '$receiver_email' AND receiver_email = '$me')
+                ORDER BY time ASC
+            ");
+
+            while ($msg = mysqli_fetch_array($msgs)) {
+                $cls = $msg['sender_email'] == $me ? "sent" : "received";
+                echo "<div class='message $cls'>";
+                echo htmlspecialchars($msg['message']);
+                if ($msg['image']) {
+                    echo "<br><img src='" . htmlspecialchars($msg['image']) . "' class='image-message' onclick='openModal(this)'>";
+                }
+                echo "<br><small>" . htmlspecialchars($msg['time']) . "</small>";
+                echo "</div>";
+            }
+            ?>
+        </div>
+        <form class="input-area" method="POST" action="chat.php?user=<?php echo htmlspecialchars($receiver_email); ?>" enctype="multipart/form-data">
+            <input type="hidden" name="receiver_email" value="<?php echo htmlspecialchars($receiver_email); ?>">
+            <input type="text" name="message" id="msgInput" placeholder="Type a message" required>
+            <button type="button" id="emoji-btn">😊</button>
+            <input type="file" name="image">
+            <button type="submit" name="send">Send</button>
+        </form>
+    </div>
+
+    <div id="myModal" class="modal" style="display: none;">
+        <img class="modal-content" id="img01" style="margin-bottom: 10px;">
+        <div id="caption" style="text-align: center; margin-bottom: 10px;"></div>
+        <div id="modalActions" style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+            <span class="close" style="font-size: 20px; font-weight: bold; cursor: pointer; opacity: 0.7; background-color: transparent; border: none; padding: 5px; line-height: 1; text-decoration: none;">✕</span>
+            <div style="display: flex;">
+                <button id="copyButton" style="background-color:#6c757d; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:16px; margin-right: 10px;">Copy</button>
+                <a id="downloadLink" download style="text-decoration: none;">
+                    <button style="background-color:#007bff; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:16px;">Download</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+       // Get the modal
+        var modal = document.getElementById("myModal");
+
+        // Get the image element inside the modal
+        var modalImg = document.getElementById("img01");
+
+        // Get the caption text element
+        var captionText = document.getElementById("caption");
+
+        // Get the download link element
+        var downloadLink = document.getElementById("downloadLink");
+
+        // Get the copy button element
+        var copyButton = document.getElementById("copyButton");
+
+        function openModal(img) {
+            modal.style.display = "flex"; // Changed to flex for centering
+            modalImg.src = img.src;
+            captionText.innerHTML = img.alt;
+            downloadLink.href = img.src; // Set the download link to the image source
+            downloadLink.download = img.src.substring(img.src.lastIndexOf('/') + 1); // Suggest a filename
+        }
+
+        // Add event listener for the copy button
+        if (copyButton) {
+            copyButton.addEventListener('click', function() {
+                const imageUrl = modalImg.src;
+
+                // Use the Clipboard API to copy the text
+                navigator.clipboard.writeText(imageUrl).then(function() {
+                    alert('Image URL copied to clipboard!'); // Optional feedback
+                }).catch(function(err) {
+                    console.error('Could not copy text: ', err);
+                    alert('Failed to copy image URL.'); // Optional error feedback
+                });
+            });
+        }
+
+        // Get the close button
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Also close the modal if the user clicks anywhere outside of the image
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const button = document.querySelector('#emoji-btn');
+            const input = document.querySelector('#msgInput');
+            const picker = new EmojiButton();
+            const messageArea = document.getElementById('messageArea');
+
+            picker.on('emoji', emoji => {
+                input.value += emoji;
+            });
+
+            button.addEventListener('click', () => {
+                picker.togglePicker(button);
+            });
+
+            // Scroll to the bottom of the message area
+            function scrollToBottom() {
+                messageArea.scrollTop = messageArea.scrollHeight;
+            }
+
+            scrollToBottom(); // Scroll to bottom on page load
+
+            // You might want to implement a mechanism to automatically refresh messages
+            // (e.g., using setInterval and an AJAX call) to make it a real-time chat.
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
+
+</body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
+session_start();
+include 'conn.php';
+
+if (!isset($_SESSION['email'])) {
+    header("location: login.php");
+    exit();
+}
+
+$me = $_SESSION['email'];
+
+if (isset($_POST['send'])) {
+    $to = $_POST['receiver_email'];
+    $message = $_POST['message'];
+    $img_path = '';
+
+    if (isset($_FILES['image']['name']) && $_FILES['image']['name'] != '') {
+        $img_name = $_FILES['image']['name'];
+        $img_tmp = $_FILES['image']['tmp_name'];
+        // $img_path = "uploads/" . time() . '_' . $img_name;
+        $img_path = "image/" . time() . '_' . $img_name;
+        move_uploaded_file($img_tmp, $img_path);
+    }
+
+    $sql = "INSERT INTO message(sender_email, receiver_email, message, image)
+                VALUES('$me', '$to', '$message', '$img_path')";
+    mysqli_query($conn, $sql);
+}
+
+$users = mysqli_query($conn, "SELECT * FROM user WHERE email != '$me'");
+$receiver_email = $_GET['user'] ?? '';
+
+if (!$receiver_email && $row = mysqli_fetch_assoc($users)) {
+    $receiver_email = $row['email'];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Chat Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.css">
+    
+ <link rel="stylesheet" href="./chat.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Users</h2>
+        <ul class="user-list">
+            <?php
+            // First, display the logged-in user with an indicator
+            $logged_in_user_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email = '$me'");
+            if ($logged_in_user = mysqli_fetch_assoc($logged_in_user_query)) {
+                $profile_photo = !empty($logged_in_user['image']) ? $logged_in_user['image'] : 'image/default_profile.png';
+                echo "<li class='logged-in-user'>";
+                echo "<div class='user-link'>"; // No href for the logged-in user in the list
+                echo "<img src='{$profile_photo}' alt='{$logged_in_user['name']}' class='profile-photo'>";
+                echo "<span>{$logged_in_user['name']} (You)</span>";
+                echo "</div>";
+                echo "</li>";
+            }
+
+            // Then, display the other users
+            $other_users_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email != '$me'");
+            while ($other_user = mysqli_fetch_assoc($other_users_query)) {
+                $profile_photo = !empty($other_user['image']) ? $other_user['image'] : 'image/default_profile.png';
+                $selected_style = ($other_user['email'] == $receiver_email) ? "style='font-weight:bold; color: #fff;'" : "";
+
+                echo "<li>";
+                echo "<a href='chat.php?user={$other_user['email']}' class='user-link' $selected_style>";
+                echo "<img src='{$profile_photo}' alt='{$other_user['name']}' class='profile-photo'>";
+                echo "<span>{$other_user['name']}</span>";
+                echo "</a>";
+                echo "</li>";
+            }
+            ?>
+        </ul>
+        <div class="logout-link">
+            <a href='logout.php'>Logout</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="chat-header">
+            <h3>Chat with: <?php echo htmlspecialchars($receiver_email); ?></h3>
+        </div>
+        <div class="message-area" id="messageArea">
+            <?php
+            $msgs = mysqli_query($conn, "
+                SELECT * FROM message
+                WHERE (sender_email = '$me' AND receiver_email = '$receiver_email')
+                   OR (sender_email = '$receiver_email' AND receiver_email = '$me')
+                ORDER BY time ASC
+            ");
+
+            while ($msg = mysqli_fetch_array($msgs)) {
+                $cls = $msg['sender_email'] == $me ? "sent" : "received";
+                echo "<div class='message $cls'>";
+                echo htmlspecialchars($msg['message']);
+                if ($msg['image']) {
+                    echo "<br><img src='" . htmlspecialchars($msg['image']) . "' class='image-message' onclick='openModal(this)'>";
+                }
+                echo "<br><small>" . htmlspecialchars($msg['time']) . "</small>";
+                echo "</div>";
+            }
+            ?>
+        </div>
+        <form class="input-area" method="POST" action="chat.php?user=<?php echo htmlspecialchars($receiver_email); ?>" enctype="multipart/form-data">
+            <input type="hidden" name="receiver_email" value="<?php echo htmlspecialchars($receiver_email); ?>">
+            <input type="text" name="message" id="msgInput" placeholder="Type a message" required>
+            <button type="button" id="emoji-btn">😊</button>
+            <input type="file" name="image">
+            <button type="submit" name="send">Send</button>
+        </form>
+    </div>
+
+    <div id="myModal" class="modal" style="display: none;">
+        <img class="modal-content" id="img01" style="margin-bottom: 10px;">
+        <div id="caption" style="text-align: center; margin-bottom: 10px;"></div>
+        <div id="modalActions" style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+            <span class="close" style="font-size: 20px; font-weight: bold; cursor: pointer; opacity: 0.7; background-color: transparent; border: none; padding: 5px; line-height: 1; text-decoration: none;">✕</span>
+            <div style="display: flex;">
+                <button id="copyButton" style="background-color:#6c757d; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:16px; margin-right: 10px;">Copy</button>
+                <a id="downloadLink" download style="text-decoration: none;">
+                    <button style="background-color:#007bff; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:16px;">Download</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src ="./chat.js">
+    <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
+
+</body>

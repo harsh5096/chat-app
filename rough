@@ -1,0 +1,454 @@
+//chat.php
+<!-- <?php 
+session_start();
+include 'conn.php';
+
+if (!isset($_SESSION['email'])) {
+	header("location: login.php");
+	exit();
+}
+
+$me = $_SESSION['email'];
+
+// Send message
+if (isset($_POST['send'])) {
+	$to = $_POST['receiver_email'];
+	$message = $_POST['message'];
+	$image = $_SESSION['image'];
+
+	$sql = "INSERT INTO message(sender_email, receiver_email, message, image) VALUES('$me', '$to', '$message', '$image')";
+	mysqli_query($conn, $sql);
+}
+
+// Fetch users to chat with
+$users = mysqli_query($conn, "SELECT * FROM user WHERE email != '$me'");
+
+// Get selected receiver from GET or default to first user
+$receiver_email = $_GET['user'] ?? '';
+
+if (!$receiver_email && $row = mysqli_fetch_assoc($users)) {
+	$receiver_email = $row['email'];
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Private Chat</title>
+	<style>
+		body { font-family: Arial; background: #f0f0f0; }
+		.container { width: 60%; margin: auto; background: #fff; padding: 20px; margin-top: 30px; }
+		.users { float: left; width: 25%; border-right: 1px solid #ccc; height: 400px; overflow-y: scroll; }
+		.chat-box { float: right; width: 70%; }
+		.message-list { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+		.message { padding: 5px; margin: 5px 0; }
+		.sent { text-align: right; color: blue; }
+		.received { text-align: left; color: green; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h3>Welcome, <?php echo $_SESSION['name']; ?> | <a href="logout.php">Logout</a></h3>
+		<div class="users">
+			<h4>Users</h4>
+			<?php 
+				$users = mysqli_query($conn, "SELECT * FROM user WHERE email != '$me'");
+				while ($u = mysqli_fetch_array($users)) {
+					$selected = $u['email'] == $receiver_email ? "style='font-weight:bold;'" : "";
+					echo "<p><a href='chat.php?user={$u['email']}' $selected>{$u['name']}</a></p>";
+				}
+			?>
+		</div>
+
+		<div class="chat-box">
+			<h4>Chat with: <?php echo $receiver_email; ?></h4>
+
+			<div class="message-list">
+				<?php 
+				$msgs = mysqli_query($conn, "
+					SELECT * FROM message 
+					WHERE (sender_email = '$me' AND receiver_email = '$receiver_email') 
+					   OR (sender_email = '$receiver_email' AND receiver_email = '$me')
+					ORDER BY time ASC
+				");
+
+				while ($msg = mysqli_fetch_array($msgs)) {
+					$cls = $msg['sender_email'] == $me ? "sent" : "received";
+					echo "<div class='message $cls'>{$msg['message']} <br><small>{$msg['time']}</small></div>";
+				}
+				?>
+			</div>
+            
+			<form method="POST" action="chat.php?user=<?php echo $receiver_email; ?>">
+				<input type="hidden" name="receiver_email" value="<?php echo $receiver_email; ?>">
+				<input type="text" name="message" placeholder="Type a message" required style="width:80%;">
+				<button type="submit" name="send">Send</button>
+			</form>
+		</div>
+		<div style="clear: both;"></div>
+	</div>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
+session_start();
+include 'conn.php';
+
+if (!isset($_SESSION['email'])) {
+    header("location: login.php");
+    exit();
+}
+
+$me = $_SESSION['email'];
+
+if (isset($_POST['send'])) {
+    $to = $_POST['receiver_email'];
+    $message = $_POST['message'];
+    $img_path = '';
+
+    if (isset($_FILES['image']['name']) && $_FILES['image']['name'] != '') {
+        $img_name = $_FILES['image']['name'];
+        $img_tmp = $_FILES['image']['tmp_name'];
+        $img_path = "image/" . time() . '_' . $img_name;
+        move_uploaded_file($img_tmp, $img_path);
+    }
+
+    $sql = "INSERT INTO message(sender_email, receiver_email, message, image)
+                VALUES('$me', '$to', '$message', '$img_path')";
+    mysqli_query($conn, $sql);
+}
+
+$users = mysqli_query($conn, "SELECT * FROM user WHERE email != '$me'");
+$receiver_email = $_GET['user'] ?? '';
+
+if (!$receiver_email && $row = mysqli_fetch_assoc($users)) {
+    $receiver_email = $row['email'];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Chat Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <link rel="stylesheet" href="./chat.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Users</h2>
+        <ul class="user-list">
+            <?php
+            // First, display the logged-in user with an indicator
+            $logged_in_user_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email = '$me'");
+            if ($logged_in_user = mysqli_fetch_assoc($logged_in_user_query)) {
+                $profile_photo = !empty($logged_in_user['image']) ? $logged_in_user['image'] : 'image/default_profile.png';
+                echo "<li class='logged-in-user'>";
+                echo "<div class='user-link'>"; // No href for the logged-in user in the list
+                echo "<img src='{$profile_photo}' alt='{$logged_in_user['name']}' class='profile-photo'>";
+                echo "<span>{$logged_in_user['name']} (You)</span>";
+                echo "</div>";
+                echo "</li>";
+            }
+
+            // Then, display the other users
+            $other_users_query = mysqli_query($conn, "SELECT id, name, email, image FROM user WHERE email != '$me'");
+            while ($other_user = mysqli_fetch_assoc($other_users_query)) {
+                $profile_photo = !empty($other_user['image']) ? $other_user['image'] : 'image/default_profile.png';
+                $selected_style = ($other_user['email'] == $receiver_email) ? "style='font-weight:bold; color: #fff;'" : "";
+
+                echo "<li>";
+                echo "<a href='chat.php?user={$other_user['email']}' class='user-link' $selected_style>";
+                echo "<img src='{$profile_photo}' alt='{$other_user['name']}' class='profile-photo'>";
+                echo "<span>{$other_user['name']}</span>";
+                echo "</a>";
+                echo "</li>";
+            }
+            ?>
+        </ul>
+        <div class="logout-link">
+            <a href='logout.php'>Logout</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="chat-header">
+            <h3>Chat with: <?php echo htmlspecialchars($receiver_email); ?></h3>
+        </div>
+        <div class="message-area" id="messageArea">
+    <?php
+    $msgs = mysqli_query($conn, "
+        SELECT * FROM message
+        WHERE (sender_email = '$me' AND receiver_email = '$receiver_email')
+           OR (sender_email = '$receiver_email' AND receiver_email = '$me')
+        ORDER BY time ASC
+    ");
+
+    while ($msg = mysqli_fetch_array($msgs)) {
+        $cls = $msg['sender_email'] == $me ? "sent" : "received";
+        echo "<div class='message $cls' data-message-id='" . htmlspecialchars($msg['id']) . "'>";
+        
+        // Message text
+        echo "<div class='message-text'>" . htmlspecialchars($msg['message']) . "</div>";
+
+        // Image preview
+        if ($msg['image']) {
+            echo "<br><img src='" . htmlspecialchars($msg['image']) . "' class='image-message' onclick='openModal(this)'>";
+        }
+
+        // Timestamp
+        echo "<br><small>" . htmlspecialchars($msg['time']) . "</small>";
+
+        // Forward button
+        echo "<button type='button' class='forward-btn' title='Forward Message'>Forward</button>";
+
+        // ✅ Delete button if current user is the sender
+        if ($msg['sender_email'] == $me) {
+            echo "<form method='POST' action='delete_message.php?user=" . urlencode($receiver_email) . "' onsubmit='return confirm(\"Delete this message?\");' style='display:inline; margin-left: 5px;'>";
+            echo "<input type='hidden' name='message_id' value='" . htmlspecialchars($msg['id']) . "'>";
+            echo "<button type='submit' class='delete-btn' title='Delete Message'>🗑️</button>";
+            echo "</form>";
+        }
+
+        echo "</div>";
+    }
+    ?>
+</div>
+        <form class="input-area" method="POST" action="chat.php?user=<?php echo htmlspecialchars($receiver_email); ?>" enctype="multipart/form-data">
+            <input type="hidden" name="receiver_email" value="<?php echo htmlspecialchars($receiver_email); ?>">
+            <input type="text" name="message" id="msgInput" placeholder="Type a message" required>
+            <!-- <button type="button" id="emoji-btn">😊</button> -->
+            <input type="file" name="image" style="display: none;" id="imageUpload">
+
+    
+
+            <label for="imageUpload" class="upload-icon" style="cursor:pointer;     margin-right: 23px;
+    margin-left: 12px;">
+           <i class="fas fa-image"></i>
+           </label>
+
+            <button type="submit" name="send">Send</button>
+        </form>
+    </div>
+
+    <div id="myModal" class="modal" style="display: none;">
+        <img class="modal-content" id="img01" style="margin-bottom: 10px;">
+        <div id="caption" style="text-align: center; margin-bottom: 10px;"></div>
+        <div id="modalActions" style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+            <span class="close" style="font-size: 20px; font-weight: bold; cursor: pointer; opacity: 0.7; background-color: transparent; border: none; padding: 5px; line-height: 1; text-decoration: none;">✕</span>
+            <div style="display: flex;">
+                <button id="copyButton" style="background-color:#6c757d; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:16px; margin-right: 10px;">Copy</button>
+                <a id="downloadLink" download style="text-decoration: none;">
+                    <button style="background-color:#007bff; color:#fff; border:none; padding:10px 15px; border-radius:6px; cursor:pointer; font-size:16px;">Download</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+   <div id="forwardModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Forward to:</h3>
+            <span class="close-forward">&times;</span>
+        </div>
+        <div id="forwardUserList">
+            <?php
+            $all_users_query = mysqli_query($conn, "SELECT id, name, email FROM user WHERE email != '$me'");
+            while ($user = mysqli_fetch_assoc($all_users_query)) {
+                echo "<label><input type='checkbox' name='forward_to[]' value='" . htmlspecialchars($user['email']) . "'> " . htmlspecialchars($user['name']) . " (" . htmlspecialchars($user['email']) . ")</label><br>";
+            }
+            ?>
+        </div>
+        <button id="sendForward">Send Forward</button>
+    </div>
+</div>
+
+
+    <script src ="./chat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Get the modal
+ var modal = document.getElementById("myModal");
+
+ // Get the image element inside the modal
+ var modalImg = document.getElementById("img01");
+
+ // Get the caption text element
+ var captionText = document.getElementById("caption");
+
+ // Get the download link element
+ var downloadLink = document.getElementById("downloadLink");
+
+ // Get the copy button element
+ var copyButton = document.getElementById("copyButton");
+
+ function openModal(img) {
+     modal.style.display = "flex"; // Changed to flex for centering
+     modalImg.src = img.src;
+     captionText.innerHTML = img.alt;
+     downloadLink.href = img.src; // Set the download link to the image source
+     downloadLink.download = img.src.substring(img.src.lastIndexOf('/') + 1); // Suggest a filename
+ }
+
+ // Add event listener for the copy button
+ if (copyButton) {
+     copyButton.addEventListener('click', function() {
+         const imageUrl = modalImg.src;
+
+         // Use the Clipboard API to copy the text
+         navigator.clipboard.writeText(imageUrl).then(function() {
+             alert('Image URL copied to clipboard!'); // Optional feedback
+         }).catch(function(err) {
+             console.error('Could not copy text: ', err);
+             alert('Failed to copy image URL.'); // Optional error feedback
+         });
+     });
+ }
+
+ // Get the close button
+ var span = document.getElementsByClassName("close")[0];
+
+ // When the user clicks on <span> (x), close the modal
+ span.onclick = function() {
+     modal.style.display = "none";
+ }
+
+ // Also close the modal if the user clicks anywhere outside of the image
+ window.onclick = function(event) {
+     if (event.target == modal) {
+         modal.style.display = "none";
+     }
+ }
+
+ document.addEventListener('DOMContentLoaded', () => {
+     const button = document.querySelector('#emoji-btn');
+     const input = document.querySelector('#msgInput');
+     const picker = new EmojiButton();
+     const messageArea = document.getElementById('messageArea');
+
+     picker.on('emoji', emoji => {
+         input.value += emoji;
+     });
+
+     button.addEventListener('click', () => {
+         picker.togglePicker(button);
+     });
+
+     // Scroll to the bottom of the message area
+     function scrollToBottom() {
+         messageArea.scrollTop = messageArea.scrollHeight;
+     }
+
+     scrollToBottom(); // Scroll to bottom on page load
+
+     // You might want to implement a mechanism to automatically refresh messages
+     // (e.g., using setInterval and an AJAX call) to make it a real-time chat.
+ });
+
+
+ //forward
+ const forwardModal = document.getElementById('forwardModal');
+const closeForwardButton = document.querySelector('.close-forward');
+const sendForwardButton = document.getElementById('sendForward');
+const forwardUserList = document.getElementById('forwardUserList');
+
+let currentMessageToForward = {};
+
+// Function triggered by forward icon onclick
+function forwardMessage(element) {
+    const messageId = element.getAttribute('data-msg-id');
+    const messageText = element.getAttribute('data-msg-text');
+    const messageImage = element.getAttribute('data-msg-image');
+
+    currentMessageToForward.id = messageId;
+    currentMessageToForward.text = messageText;
+    currentMessageToForward.image = messageImage;
+
+    console.log("Opening forward modal for message:", currentMessageToForward);
+
+    // Show modal
+    forwardModal.style.display = 'block';
+}
+
+// Close modal on X button
+closeForwardButton?.addEventListener('click', function () {
+    forwardModal.style.display = 'none';
+});
+
+// Close modal if user clicks outside it
+window.addEventListener('click', function (event) {
+    if (event.target == forwardModal) {
+        forwardModal.style.display = 'none';
+    }
+});
+
+// Send forward request
+sendForwardButton.addEventListener('click', function () {
+    const checkedUsers = forwardUserList.querySelectorAll('input[name="forward_to[]"]:checked');
+    const recipients = [];
+
+    checkedUsers.forEach(user => {
+        recipients.push(user.value);
+    });
+
+    if (recipients.length > 0 && currentMessageToForward.id) {
+        fetch('forward_message.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message_id: currentMessageToForward.id,
+                recipients: recipients
+            }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Message forwarded successfully!');
+                    forwardModal.style.display = 'none';
+                    window.location.reload();
+                } else {
+                    alert('Error forwarding message: ' + data.error);
+                }
+            })
+            .catch((error) => {
+                console.error('Forward Error:', error);
+                alert('An error occurred while forwarding.');
+            });
+    } else {
+        alert('Please select at least one recipient to forward to.');
+    }
+});
